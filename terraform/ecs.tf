@@ -58,10 +58,6 @@ resource "aws_ecs_task_definition" "test" {
   }
 }
 
-data "aws_ecs_task_definition" "latest" {
-  task_definition = aws_ecs_task_definition.test.arn
-}
-
 resource "aws_security_group" "lb" {
   vpc_id = var.vpc_id
 
@@ -139,7 +135,7 @@ resource "aws_security_group" "ecs" {
 resource "aws_ecs_service" "test" {
   name            = "test-service"
   cluster         = aws_ecs_cluster.test.id
-  task_definition = data.aws_ecs_task_definition.latest.arn
+  task_definition = aws_ecs_task_definition.test.arn
   desired_count   = 2
   launch_type     = "FARGATE"
 
@@ -158,4 +154,8 @@ resource "aws_ecs_service" "test" {
   depends_on = [aws_lb_listener.test]
 
   force_new_deployment = true
+
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
 }
