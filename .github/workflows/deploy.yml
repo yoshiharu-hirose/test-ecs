@@ -1,0 +1,56 @@
+name: Deploy to Amazon ECS
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: write
+
+env:
+  AWS_REGION: ap-northeast-1
+  AWS_IAM_ROLE_ARN: arn:aws:iam::828515526579:role/github-actions
+  ECR_REPOSITORY: test-repo
+  ECS_SERVICE: test-service
+  ECS_CLUSTER: test-cluster
+  ECS_TASK_DEFINITION: task-definition.json
+  CONTAINER_NAME: app
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: $${ env.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_IAM_ROLE_ARN }}
+      - uses: aws-actions/amazon-ecr-login@v1
+        id: login-ecr
+      - name: build and push docker image to ecr
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ env.REPOSITORY }}
+          IMAGE_TAG: latest
+        run: |
+          cd docker
+          docker build . --tag ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}
+          docker push ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}
+
+#      # https://github.com/aws-actions/amazon-ecs-render-task-definition
+#      - name: Render Amazon ECS task definition
+#        id: render-web-container
+#        uses: aws-actions/amazon-ecs-render-task-definition@v1
+#        with:
+#          task-definition: ${{ env.ECS_TASK_DEFINITION }}
+#          container-name: ${{ env.CONTAINER_NAME }}
+#          image: ${{ steps.build-image.outputs.image }}
+#      - name: Deploy to Amazon ECS service
+#        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+#        with:
+#          task-definition: ${{ steps.render-web-container.outputs.task-definition }}
+#          service: ${{ env.ECS_SERVICE }}
+#          cluster: ${{ env.ECS_CLUSTER }}
