@@ -52,6 +52,10 @@ resource "aws_ecs_task_definition" "test" {
       ]
     }
   ])
+
+  lifecycle {
+    ignore_changes = [cpu, memory, container_definitions]
+  }
 }
 
 data "aws_ecs_task_definition" "latest" {
