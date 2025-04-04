@@ -135,7 +135,7 @@ resource "aws_security_group" "ecs" {
 resource "aws_ecs_service" "test" {
   name            = "test-service"
   cluster         = aws_ecs_cluster.test.id
-  task_definition = data.aws_ecs_task_definition.latest
+  task_definition = data.aws_ecs_task_definition.latest.arn
   desired_count   = 2
   launch_type     = "FARGATE"
 
